@@ -1,3 +1,34 @@
+"""
+Title: Constructing and Visualizing a Graph with Minimum Spanning Tree for a City Layout
+
+Problem Statement:
+You are given a city layout represented by nodes that signify houses, malls, and centers, each with specific coordinates. The city has the following characteristics:
+
+Nodes: Represent different types of structures in the city, such as houses, malls, and centers.
+House: A residential building.
+Mall: A commercial shopping center.
+Center: A central hub or major landmark.
+Edges: Represent possible paths between the structures with weights based on Euclidean distances.
+Slow Paths: Paths between houses, and between houses and malls, which are slower and have higher weights.
+Fast Paths: Paths between malls, and between malls and centers, which are faster and have lower weights.
+Your task is to:
+
+1.Construct the Graph:
+
+    * Create nodes with attributes including type, coordinates, and color (black for houses, red for malls).
+    * Define edges with weights based on Euclidean distances and classify them as either slow or fast paths.
+2.Compute the Minimum Spanning Tree (MST):
+
+    * Apply Prim's algorithm to find the MST of the constructed graph.
+    * Ensure the MST connects all nodes with the minimum total edge weight.
+3.Visualize the Graph:
+
+    * Provide a detailed visual representation of the graph.
+    * Include node colors, edge colors, and edge weights.
+    * Display the total weights of slow and fast edges.
+"""
+
+
 import networkx as nx
 import matplotlib.pyplot as plt
 from scipy.spatial import distance
