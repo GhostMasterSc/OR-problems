@@ -1,6 +1,29 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+"""
+The restaurant has:
+
+* Two prep stations
+* Two cooking stations
+
+Each order must go through a prep station before going to a cooking station. An order cannot start cooking until its prep is completed.
+The restaurant wants to prioritize kids' orders. They've introduced a priority ratio (p_ratio) that affects the effective prep and cook times for kids' orders when determining the sequence.
+Your task is to create a scheduling algorithm that minimizes the total time to complete all orders while considering the following:
+
+Use a modified version of Johnson's Rule to sequence the orders.
+Incorporate the priority ratio (p_ratio) to give preference to kids' orders.
+Utilize both prep stations and both cooking stations efficiently.
+Analyze how different values of p_ratio affect the total completion time.
+
+Develop a Python program that:
+a) Implements the scheduling algorithm
+b) Calculates the completion time for each order and the total time to complete all orders
+c) Creates a Gantt chart to visualize the schedule
+d) Plots the relationship between p_ratio and total completion time
+How does the p_ratio parameter affect the scheduling and total completion time? What insights can be gained from the Gantt chart and the plot of completion times vs. p_ratio?
+"""
+
 class J_rule:
     def __init__(self, attrs, p_ratio=0.8):
         self.attrs = attrs
