@@ -1,0 +1,109 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+from collections import deque
+
+class MaxFlowSolver:
+    def __init__(self, graph, source, sink):
+        self.graph = graph
+        self.source = source
+        self.sink = sink
+        self.residual_graph = self.create_residual_graph(graph)
+        self.max_flow_value = 0
+        self.flow_edges = {}
+
+    def bfs_capacity_path(self):
+        queue = deque([self.source])
+        paths = {self.source: []}
+        if self.source == self.sink:
+            return paths[self.source]
+
+        while queue:
+            current = queue.popleft()
+            for neighbor in self.residual_graph[current]:
+                residual_capacity = self.residual_graph[current][neighbor]
+                if residual_capacity > 0 and neighbor not in paths:
+                    paths[neighbor] = paths[current] + [(current, neighbor)]
+                    if neighbor == self.sink:
+                        return paths[neighbor]
+                    queue.append(neighbor)
+        return None
+
+    def find_maximum_flow(self):
+        path = self.bfs_capacity_path()
+        while path is not None:
+            flow = min(self.residual_graph[start][end] for start, end in path)
+            for start, end in path:
+                self.residual_graph[start][end] -= flow
+                if end in self.residual_graph:
+                    if start in self.residual_graph[end]:
+                        self.residual_graph[end][start] += flow
+                    else:
+                        self.residual_graph[end][start] = flow
+                else:
+                    self.residual_graph[end] = {start: flow}
+
+            self.max_flow_value += flow
+            path = self.bfs_capacity_path()
+
+        self.calculate_flow_edges()
+
+    def calculate_flow_edges(self):
+        self.flow_edges = {(u, v): self.graph[u][v] - self.residual_graph[u].get(v, 0)
+                           for u in self.graph for v in self.graph[u]}
+
+    def create_residual_graph(self, graph):
+        residual_graph = {}
+        for u in graph:
+            residual_graph[u] = {}
+            for v, capacity in graph[u].items():
+                residual_graph[u][v] = capacity
+        return residual_graph
+
+    def create_networkx_graph(self):
+        G = nx.DiGraph()
+        for u in self.graph:
+            for v, capacity in self.graph[u].items():
+                if capacity > 0:
+                    G.add_edge(u, v, capacity=capacity)
+        return G
+
+    def draw_graph(self, G, flow=None, title='Flow Network'):
+        pos = nx.spring_layout(G)
+        edge_colors = []
+        edge_labels = {}
+
+        for u, v, data in G.edges(data=True):
+            if flow and (u, v) in flow:
+                edge_labels[(u, v)] = f"{flow[(u, v)]}/{data['capacity']}"
+                edge_colors.append('steelblue')
+            else:
+                edge_labels[(u, v)] = f"{data['capacity']}"
+                edge_colors.append('gray')
+
+        nx.draw(G, pos, with_labels=True, node_color='lightgreen', node_size=700,
+                edge_color=edge_colors, width=2, arrows=True, arrowstyle='-|>', arrowsize=20)
+        nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=10)
+
+        plt.title(title)
+        plt.axis('off')
+        plt.show()
+
+    def visualize_maximum_flow_solution(self):
+        original_graph = self.create_networkx_graph()
+        self.find_maximum_flow()
+
+        print(f"Maximum Flow Value: {self.max_flow_value}")
+
+        self.draw_graph(original_graph, title='Original Network with Capacities')
+        self.draw_graph(original_graph, flow=self.flow_edges,
+                        title='Flow Network with Maximum Flow')
+
+
+# Example usage
+graph = {'A': {'B': 16, 'C': 13}, 'B': {'C': 10, 'D': 12}, 'C': {
+    'B': 4, 'D': 14, 'E': 20}, 'D': {'F': 7}, 'E': {'D': 9, 'F': 4}, 'F': {}}
+source = 'A'
+sink = 'F'
+
+solver = MaxFlowSolver(graph, source, sink)
+solver.visualize_maximum_flow_solution()
