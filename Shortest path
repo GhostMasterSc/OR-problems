@@ -1,0 +1,141 @@
+import networkx as nx
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.spatial import distance
+import time
+
+class shortest_path:
+    def __init__(self, nodes):
+        self.nodes = nodes
+        self.graph = None
+        self.node_positions = None
+        self.node_scores = None
+        self.edge_labels = None
+
+    def dijks(self):
+        start_time = time.time()
+
+        graph = nx.Graph()
+        not_visited = set(self.nodes.keys())
+        start = list(self.nodes.keys())[0]
+        visited = set([start])
+        not_visited.remove(start)
+        node_scores = {start: 0}
+        node_positions = {start: self.nodes[start]['coordinates']}
+        edge_labels = {}
+
+        graph.add_node(start, score=node_scores[start])
+
+        while not_visited:
+            min_value = float('inf')
+            next_node = None
+            current_node = None
+            for v_node in visited:
+                for n_node in not_visited:
+                    if n_node in self.nodes[v_node]['connections']:
+                        pos_1 = self.nodes[v_node]['coordinates']
+                        pos_2 = self.nodes[n_node]['coordinates']
+                        distance_value = distance.euclidean(pos_1, pos_2)
+                        node_score = node_scores[v_node] + distance_value
+                        if node_score < min_value:
+                            min_value = node_score
+                            next_node = n_node
+                            current_node = v_node
+                            edge_value = distance_value
+
+            if next_node is None:
+                break
+
+            visited.add(next_node)
+            not_visited.remove(next_node)
+            node_positions[next_node] = self.nodes[next_node]['coordinates']
+            node_scores[next_node] = round(min_value, 2)
+
+            graph.add_node(next_node)
+            graph.add_edge(current_node, next_node)
+            edge_labels[(current_node, next_node)] = np.round(edge_value, 2)
+
+        self.graph = graph
+        self.node_positions = node_positions
+        self.node_scores = node_scores
+        self.edge_labels = edge_labels
+
+        end_time = time.time()
+        print(f'Dijkstra\'s algorithm execution time: {end_time - start_time} seconds')
+
+        return graph, node_positions, node_scores, edge_labels
+
+    def bellman_ford(self):
+        start_time = time.time()
+
+        graph = nx.DiGraph()
+        start = list(self.nodes.keys())[0]
+        node_scores = {node: float('inf') for node in self.nodes}
+        node_scores[start] = 0
+        node_positions = {node: self.nodes[node]['coordinates'] for node in self.nodes}
+        edge_labels = {}
+
+        for node in self.nodes:
+            for neighbor in self.nodes[node]['connections']:
+                pos_1 = self.nodes[node]['coordinates']
+                pos_2 = self.nodes[neighbor]['coordinates']
+                distance_value = distance.euclidean(pos_1, pos_2)
+                graph.add_edge(node, neighbor, weight=distance_value)
+
+        for _ in range(len(self.nodes) - 1):
+            for u, v, data in graph.edges(data=True):
+                if node_scores[u] + data['weight'] < node_scores[v]:
+                    node_scores[v] = node_scores[u] + data['weight']
+
+        for u, v, data in graph.edges(data=True):
+            if node_scores[u] + data['weight'] < node_scores[v]:
+                raise ValueError("Graph contains a negative-weight cycle")
+
+        for u, v, data in graph.edges(data=True):
+            edge_labels[(u, v)] = np.round(data['weight'], 2)
+
+        self.graph = graph
+        self.node_positions = node_positions
+        self.node_scores = {node: round(score, 2) for node, score in node_scores.items()}
+        self.edge_labels = edge_labels
+
+        end_time = time.time()
+        print(f'Bellman-Ford algorithm execution time: {end_time - start_time} seconds')
+
+        return graph, node_positions, self.node_scores, edge_labels
+
+    def draw_graph(self):
+        if self.graph is None or self.node_positions is None or self.node_scores is None or self.edge_labels is None:
+            raise ValueError("Graph data not initialized. Run dijks() or bellman_ford() method first.")
+
+        # Define node labels with scores
+        node_labels = {node: f'{data}' for node, data in self.node_scores.items()}
+
+        # Draw the graph with specified positions
+        nx.draw(self.graph, pos=self.node_positions, with_labels=True, labels=None,
+                node_size=700, node_color='lightblue', edge_color='gray', font_size=10)
+
+        # Offset positions to draw node labels above the nodes
+        offset_pos = {node: (x, y + 0.7) for node, (x, y) in self.node_positions.items()}
+        nx.draw_networkx_labels(self.graph, pos=offset_pos, labels=node_labels, font_color='red')
+
+        # Draw the edge labels
+        nx.draw_networkx_edge_labels(self.graph, pos=self.node_positions, edge_labels=self.edge_labels, font_color='red')
+
+        # Display the plot
+        plt.show()
+
+# Example usage
+nodes = {
+    'A': {'coordinates': (0, 0), 'connections': ['B', 'C']},
+    'B': {'coordinates': (1, 1), 'connections': ['A', 'C', 'D']},
+    'C': {'coordinates': (1, 0), 'connections': ['A', 'B', 'D']},
+    'D': {'coordinates': (2, 1), 'connections': ['B', 'C']}
+}
+
+sp = shortest_path(nodes)
+sp.dijks()
+sp.draw_graph()
+
+sp.bellman_ford()
+sp.draw_graph()
